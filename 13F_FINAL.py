@@ -56,7 +56,6 @@ def to_numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce").fillna(0.0)
 
 
-# ============================================================
 # 2. 讀取 Ticker Universe
 # ============================================================
 
@@ -142,17 +141,13 @@ def load_ticker_universe(path: Path) -> pd.DataFrame:
     return result
 
 
-# ============================================================
-# 3. 清理單一期 holdings
+# 3. 清理單一期 holdings：
+# 讀 report.holdings + 排除 PUT CALL + 只保留Universe
+# 同 Institution × Ticker 最後只留一列
 # ============================================================
 
 def clean_holdings(report, target_tickers: set[str]) -> pd.DataFrame:
-    """
-    1. 讀 report.holdings
-    2. 排除 PUT / CALL
-    3. 只保留 Universe
-    4. 同 Institution × Ticker 最後只留一列
-    """
+
     holdings = report.holdings
 
     if holdings is None or len(holdings) == 0:
@@ -219,19 +214,10 @@ def change_pct(current: float, previous: float):
     return (current - previous) / previous
 
 
-# ============================================================
 # 4. 13F 訊號定義
-#
-# 不設自創 ±20% 門檻。
-#
-# 持股量方向：
-#   看 Aggregate Shares QoQ
-#
-# 機構持股方向：
-#   看增持家數 vs 減持家數
-#
-# 13F訊號：
-#   同時保留「量」與「家數」兩種資訊
+# 持股量方向：看 Aggregate Shares QoQ
+# 機構持股方向：看增持家數 vs 減持家數
+# 13F訊號：同時保留「量」與「家數」兩種資訊
 # ============================================================
 
 def holding_amount_direction(qoq):
@@ -267,7 +253,6 @@ def build_13f_signal(
     )
 
 
-# ============================================================
 # 5. 讀取 Manager List
 # ============================================================
 
@@ -327,10 +312,8 @@ if eligible.empty:
     )
 
 
+# 6. 載入所有股票清單
 # ============================================================
-# 6. 載入全股票 Universe
-# ============================================================
-
 universe_df = load_ticker_universe(TICKER_UNIVERSE_FILE)
 TARGET_TICKERS = set(universe_df["Ticker"])
 
@@ -350,10 +333,8 @@ print(f"Managers     : {len(eligible):,}")
 print(f"Tickers      : {len(TARGET_TICKERS):,}")
 
 
-# ============================================================
 # 7. 自動判斷共同最新季度
 # ============================================================
-
 periods = [
     normalize_period(v)
     for v in eligible["Report Period"]
@@ -376,7 +357,6 @@ print(f"Target period: {TARGET_REPORT_PERIOD}")
 print(f"Quarter      : {QUARTER}")
 
 
-# ============================================================
 # 8. Output
 # ============================================================
 
@@ -392,8 +372,7 @@ FINAL_FILE = (
 )
 
 
-# ============================================================
-# 9. 逐家 Manager 抓取
+# 9. 選取各機構
 # ============================================================
 
 detail_frames = []
@@ -462,7 +441,7 @@ for seq, (idx, original_row) in enumerate(
             )
         )
 
-        # 最新資料非共同季度 → STALE
+        # 最新資料非共同季度：STALE
         if actual_period != TARGET_REPORT_PERIOD:
             elapsed = time.monotonic() - started
 
@@ -675,11 +654,8 @@ for seq, (idx, original_row) in enumerate(
 
     time.sleep(SLEEP_SECONDS)
 
-
-# ============================================================
 # 10. Detail
 # ============================================================
-
 if detail_frames:
     detail_df = pd.concat(
         detail_frames,
@@ -731,10 +707,8 @@ aggregate_manager_count = (
 )
 
 
-# ============================================================
 # 11. Full Universe Summary
 # ============================================================
-
 summary_rows = []
 
 for _, ticker_row in universe_df.iterrows():
@@ -884,10 +858,8 @@ summary_df = pd.DataFrame(
 )
 
 
-# ============================================================
 # 12. Dashboard 精簡版
 # ============================================================
-
 dashboard_df = summary_df[
     [
         "Quarter",
@@ -919,10 +891,8 @@ dashboard_df["13F顯示"] = (
 )
 
 
-# ============================================================
 # 13. Excel 輸出，一次完成
 # ============================================================
-
 with pd.ExcelWriter(
     FINAL_FILE,
     engine="openpyxl",
@@ -965,7 +935,6 @@ with pd.ExcelWriter(
     )
 
 
-# ============================================================
 # 14. Console
 # ============================================================
 
@@ -1001,5 +970,4 @@ print(
     "\n13F 訊號說明："
     "\n- 持股量方向：看追蹤機構合計 Shares QoQ"
     "\n- 機構持股方向：比較增持家數與減持家數"
-    "\n- 13F訊號：同時呈現上述兩種資訊，不直接改變 Risk Level"
 )
