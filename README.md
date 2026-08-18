@@ -6,7 +6,7 @@
 本模組定位為在既有「負面新聞資訊監控」下的補充資訊；後續可依Ticker與負面新聞資料合併，供 Dashboard
 顯示機構與內部人動向。
 
-**最後異動時間：2026/08/18 08:00（台灣時間，UTC+8）**
+**最後異動時間：2026/08/18 08:08（台灣時間，UTC+8）**
 
 ------------------------------------------------------------------------
 
@@ -33,11 +33,11 @@ D:\Python\SEC13F\
 
 ``` text  
   程式                                用途
-  ----------------------------------- -----------------------------------
-  `13F_FINAL.py`                      取得指定機構的 SEC
+  --------------------------------- -----------------------------------
+  13F_FINAL.py                      取得指定機構的 SEC
                                       13F-HR，整理本季與前季持股變化
 
-  `Form4_FINAL.py`                    取得股票 Universe 最近 30 日 SEC
+  Form4_FINAL.py                    取得股票 Universe 最近 30 日 SEC
                                       Form 4，整理內部人 P/S 交易
   -----------------------------------------------------------------------
 ```
@@ -47,8 +47,8 @@ D:\Python\SEC13F\
 ``` text  
   檔案                         用途
   ---------------------------- -------------------------------------------
-  `13F_Manager_List.xlsx`      13F 追蹤機構清單、CIK、啟用與納入彙總設定
-  `13F_Ticker_Universe.xlsx`   13F 與 Form 4 共用的股票 Universe
+  13F_Manager_List.xlsx        13F 追蹤機構清單、CIK、啟用與納入彙總設定
+  13F_Ticker_Universe.xlsx     13F 與 Form 4 共用的股票 Universe
 
 ------------------------------------------------------------------------
 ```
@@ -91,7 +91,7 @@ BASE_DIR = Path(r"D:\Python\SEC13F")
 -   `Active = Y`
 -   `Validation Status = OK`
 
-的機構作為候選清單，並依 `Include in Aggregate` 判斷是否納入彙總。
+的機構作為納入檢視的清單，並依 `Include in Aggregate` 判斷是否納入彙總。
 
 程式會自動以 Manager List 中最常見的 `Report Period` 判定共同目標季度。
 
@@ -139,15 +139,15 @@ CALL
 ## 3.3 單一機構 × 股票狀態
 
 依本季 Shares 與前季 Shares 判定：
-
+``` text
   Status        定義
   ------------- -------------------
-  `NEW`         前季 0、本季 \> 0
-  `CLOSED`      前季 \> 0、本季 0
-  `INCREASED`   本季 \> 前季
-  `DECREASED`   本季 \< 前季
-  `UNCHANGED`   本季 = 前季
-
+  NEW           前季 0、本季 > 0
+  CLOSED        前季 > 0、本季 0
+  INCREASED     本季 > 前季
+  DECREASED     本季 < 前季
+  UNCHANGED     本季 = 前季
+```
 持股變動率：
 
 ``` text
@@ -194,11 +194,10 @@ QoQ = 0  → 持股不變
 ``` text
 增持家數 > 減持家數 → 增持家數較多
 增持家數 < 減持家數 → 減持家數較多
-相同                  → 增減持家數相同
+相同               → 增減持家數相同
 ```
 
-因此 13F
-訊號同時保留「持股量」與「機構家數」兩個面向，而非只看單一指標。
+-   13F訊號同時包含「持股量」與「機構家數」兩個面向，而非只看單一指標。
 
 ------------------------------------------------------------------------
 
@@ -268,20 +267,21 @@ FILING_BUFFER_DAYS = 15
 
 正式內部人交易訊號只使用：
 
+``` text
   Code   定義
   ------ ----------
-  `P`    Purchase
-  `S`    Sale
+  P      Purchase
+  S      Sale
+```
 
 程式使用：
+(1) 用以取得 P/S 市場交易
 
 ``` python
 form4.market_trades
 ```
 
-取得 P/S 市場交易。
-
-其他非 P/S 交易則透過：
+(2) 其他非 P/S 交易則透過：
 
 ``` python
 form4.to_dataframe()
@@ -331,7 +331,7 @@ Issuer Unknown Filings
 
 ## 4.5 Transaction Dedup
 
-P/S 與 Excluded Transactions 都會進行 transaction-level 去重。
+P/S 與 Excluded Transactions 都會進行 transaction-level 移除重複作業。
 
 主要辨識欄位包括：
 
@@ -366,33 +366,33 @@ Sell Count = S 交易筆數
 
 訊號：
 
+``` text
        NPR Signal            中文顯示
   -------- ----------------- -------------
-      \> 0 Net Buying        近期淨買入
-      \< 0 Net Selling       近期淨賣出
+      > 0 Net Buying         近期淨買入
+      < 0 Net Selling        近期淨賣出
        = 0 Neutral           買賣中性
     無 P/S No P/S Activity   無 P/S 交易
+```
 
-另外保留：
+另外呈現 Net Amount，此為補充資訊，不取代 NPR：
 
 ``` text
 Net Amount = Buy Amount - Sell Amount
 ```
 
-Net Amount 為補充資訊，不取代 NPR。
-
 ------------------------------------------------------------------------
 
-## 4.7 10b5-1
+## 4.7 10b5-1  內部人事先設定好的自動交易計畫
 
-程式保留：
+為了辨識可能屬於預先安排交易計畫的 P/S 交易，
+
+目前採取保留相關資訊：
 
 ``` text
 10b5-1 Plan
 10b5-1 P/S Count
 ```
-
-用於辨識可能屬於預先安排交易計畫的 P/S 交易。
 
 目前版本：
 
@@ -406,11 +406,11 @@ Net Amount 為補充資訊，不取代 NPR。
 
 ------------------------------------------------------------------------
 
-## 4.8 Form 4/A
+## 4.8 Form 4/A  公司內部人已經提交了一份 Form 4，後來發現內容需要更正，因此再提交修正版。
 
 Form 4/A 為 Form 4 的 Amendment。
 
-目前版本：
+目前採取保留相關資訊：
 
 ``` text
 不直接納入 P/S 計算
@@ -437,7 +437,7 @@ insider_form4\<Run Date>\
 例如：
 
 ``` text
-insider_form4\2026-08-18\Form4_2026-08-18_30D_Full_Universe.xlsx
+insider_form4\2026-08-01\Form4_2026-08-01_30D_Full_Universe.xlsx
 ```
 
 Excel 包含：
@@ -454,7 +454,7 @@ Excel 包含：
 
 # 5. Dashboard 整合定位
 
-13F 與 Form 4 都屬於 **輔助訊號**。
+13F 與 Form 4 都屬於 **輔助訊號，不直接改變新聞 Risk Level。**。
 
 核心原則：
 
@@ -478,12 +478,13 @@ Ticker ─────────────┼─ Form 4：內部人交易動
 
 建議 Dashboard 顯示：
 
+``` text
   Ticker   Risk   13F              Insider
   -------- ------ ---------------- --------------
   NVDA     L4     ↓ 機構持股下降   ↓ 近期淨賣出
   MSFT     L2     ↑ 機構持股增加   ↑ 近期淨買入
+```
 
-**13F 與 Form 4 不直接改變負面新聞 Risk Level。**
 
 它們的用途是提供事件之外的市場參與者行為資訊，協助風險人員判斷：
 
@@ -499,20 +500,18 @@ Ticker ─────────────┼─ Form 4：內部人交易動
 後續 Dashboard 可依三種資訊形成輔助提示，例如：
 
 ``` text
-L4/L5 + 13F 偏減持 + Insider 偏賣出
+L4/L5 + 13F 持股下降 + Insider Net Selling
 → 多重負面訊號
 
-L4 + 13F 偏增持 + Insider 無異動
+L4 + 13F 持股增加/中性 + Insider 無重大交易
 → 事件風險為主
 
-L0/L1 + 13F 偏減持 + Insider 偏賣出
+L0/L1 + 13F 持股下降 +  Insider Net Selling
 → 籌碼面觀察
 
-L3 + 13F 偏增持 + Insider 偏買入
+L3 + 13F 持股增加 + Insider Net Buying
 → 訊號分歧
 ```
-
-此分類為 Dashboard 的輔助解讀邏輯，不應取代原負面新聞事件的 Risk Level。
 
 ------------------------------------------------------------------------
 
@@ -564,7 +563,7 @@ Message
 # 8. 注意事項
 
 1.  13F 為季度申報資料，並非即時機構持股。
-2.  13F 的「持股增加／下降」僅代表本專案追蹤機構 Universe 的彙總結果。
+2.  13F 的「持股增加／下降」，為本專案追蹤機構持股變化的彙總結果。
 3.  Form 4 的 P/S 僅代表 SEC transaction code 的 Purchase / Sale。
 4.  內部人賣出可能受到
     10b5-1、稅務、薪酬、資產配置等因素影響，不應單獨視為公司基本面負面訊號。
