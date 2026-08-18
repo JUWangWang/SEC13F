@@ -25,8 +25,8 @@ D:\Python\SEC13F\
 │     └─ 13F_2026Q2_Full_Universe.xlsx
 │
 └─ insider_form4\
-   └─ 2026-08-18\
-      └─ Form4_2026-08-18_30D_Full_Universe.xlsx
+   └─ 2026-08-01\
+      └─ Form4_2026-08-01_30D_Full_Universe.xlsx
 ```
 
 ### 主要程式
