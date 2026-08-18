@@ -6,7 +6,7 @@
 本模組定位為在既有「負面新聞資訊監控」下的補充資訊；後續可依Ticker與負面新聞資料合併，供 Dashboard
 顯示機構與內部人動向。
 
-**最後異動時間：2026/08/18 08:08（台灣時間，UTC+8）**
+**最後異動時間：2026/08/18 08:17（台灣時間，UTC+8）**
 
 ------------------------------------------------------------------------
 
@@ -351,7 +351,7 @@ P/S 與 Excluded Transactions 都會進行 transaction-level 移除重複作業�
 
 ## 4.6 NPR
 
-內部人交易方向採用 Net Purchase Ratio：
+依據Lakonishok and Lee(2001)，內部人交易方向採用 Net Purchase Ratio：
 
 ``` text
 NPR = (Buy Count - Sell Count) / (Buy Count + Sell Count)
