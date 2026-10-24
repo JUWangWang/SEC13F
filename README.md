@@ -1,5 +1,7 @@
 # SEC 13F & Form 4 Monitoring
 
+> 2026-10-24：新增 [Form4 手動補跑入口與操作說明](MANUAL_FORM4.md)。Actions 的 Generate Form4 (manual only) 只擷取 Form4；新聞專案的07:00工作只同步已發布成果，不會重跑13F或Form4。
+
 以 SEC EDGAR 公開申報資料為來源，透過 Python 與 `edgartools` 建立美股
 **機構持股（13F）** 與 **內部人交易（Form 4）** 的輔助監控資料。
 
